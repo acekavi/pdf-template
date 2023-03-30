@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
+import { faker } from '@faker-js/faker';
+
 import {jsPDF} from 'jspdf';
 import autoTable from 'jspdf-autotable'
 
@@ -21,6 +23,12 @@ export interface SubTask{
   priority: boolean;
 }
 
+export interface ImageItem{
+  id: number;
+  product: string;
+  defect: string;
+}
+
 @Component({
   selector: 'app-pdf-export',
   templateUrl: './pdf-export.page.html',
@@ -34,12 +42,13 @@ export class PdfExportPage implements OnInit {
   constructor() { }
 
   todos: Todo[] = [];
+  images: ImageItem[] = [];
 
   ngOnInit() {
-    for(let index = 0; index < 100; index++){
+    for(let index = 0; index < 10; index++){
       const newTodo: Todo = {
         id: index,
-        title: 'Todo ' + (index + 1),
+        title: faker.lorem.sentence(100),
         completed: Math.random() < 0.5,
         createdDate: new Date(),
         priority: Math.random() < 0.5,
@@ -56,15 +65,25 @@ export class PdfExportPage implements OnInit {
       }
       this.todos.push(newTodo);
     };
+
+    for(let index = 0; index < 10; index++){
+      const newImage: ImageItem = {
+        id: index,
+        product: faker.image.imageUrl(200, 200, 'Jeans'),
+        defect: faker.image.imageUrl(200, 200, 'Torn-Jeans'),
+      };
+      this.images.push(newImage);
+    }
   }
 
-  generatePDF() {
+  // ------------------------ Todo List Table --------------------------------
+  generateTodos() {
     const doc = new jsPDF({
       unit: 'pt',
       format: 'a4'
     });
     const tableData = [];
-    let totalPagesExp = '{total_pages_count_string}' 
+    let totalPagesExp = '{total_pages_count_string}';
 
     for (const todo of this.todos) {
       // Create the main row for the Todo item
@@ -91,6 +110,7 @@ export class PdfExportPage implements OnInit {
     autoTable(doc ,{
       head: [['Title', 'Completed', 'Created Date', 'Priority']],
       body: tableData,
+      rowPageBreak: 'avoid',
       theme: 'grid',
       headStyles: { valign: 'middle', halign: 'center', fillColor: [125, 125, 125]}, // Set background color for header row
       bodyStyles: { valign: 'middle', halign: 'center', fillColor: [255, 255, 255]}, // Set vertical alignment for table cells
@@ -126,4 +146,67 @@ export class PdfExportPage implements OnInit {
 
     doc.save('todos.pdf');
   }
+
+  // ------------------------ Image Grid table --------------------------------
+  generateimgGrid() {
+    const doc = new jsPDF({
+      unit: 'pt',
+      format: 'a4'
+    });
+    let totalPagesExp = '{total_pages_count_string}'
+
+    const tableData: any = [];
+
+    for (const image of this.images) {
+      // Create the main row for the Todo item
+      const tableRow = [
+        {content: image.product, cellWidth: 200},
+        {content: image.defect, cellWidth: 200}
+      ];
+
+      tableData.push(tableRow);
+    };
+
+    autoTable(doc ,{
+      head: [['Product', 'Defect']],
+      body: tableData,
+      rowPageBreak: 'avoid',
+      theme: 'plain',
+      headStyles: { valign: 'middle', halign: 'center', fillColor: [125, 125, 125]}, // Set background color for header row
+      bodyStyles: { valign: 'middle', halign: 'center'}, // Set vertical alignment for table cells
+      didDrawCell: (data) => {
+        if (data.row.index != 0) {
+          doc.addImage(
+            tableData[data.row.index][data.column.index].content,
+            data.cell.x,
+            data.cell.y,
+            data.cell.width,
+            data.cell.width
+          );
+        }
+      },
+      didDrawPage: (data) => {
+        // Header
+        doc.setFontSize(20);
+        doc.setFont('times', 'bold');
+        doc.text('Image Grid', doc.internal.pageSize.getWidth() / 2, 25, {align: 'center'});
+        
+        //Footer
+        let str = `${data.pageNumber}`
+        // Total page number plugin only available in jspdf v1.0+
+        if (typeof doc.putTotalPages === 'function') {
+          str = str + ' / ' + totalPagesExp
+        }
+        doc.setFont('times', 'bold');
+        doc.setFontSize(10);
+        doc.text(str, (doc.internal.pageSize.getWidth() / 2) + 50 , doc.internal.pageSize.getHeight() - 20, {align: 'center'});
+      }});
+
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPagesExp)
+    }
+
+    doc.save('image-grid.pdf');
+  }
 }
+
