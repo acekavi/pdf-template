@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [
-  {
-    path: 'home',
-    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
-  },
+export const routes: Routes = [ 
   {
     path: '',
-    redirectTo: 'home',
+    redirectTo: 'pdf-export',
     pathMatch: 'full',
+  },
+  {
+    path: 'pdf-export',
+    loadComponent: () => import('./pdf-export/pdf-export.page').then( m => m.PdfExportPage)
   },
 ];
