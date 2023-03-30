@@ -1,0 +1,7 @@
+{
+  "name": "pdf-template",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
