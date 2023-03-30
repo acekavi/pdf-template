@@ -69,8 +69,8 @@ export class PdfExportPage implements OnInit {
     for(let index = 0; index < 10; index++){
       const newImage: ImageItem = {
         id: index,
-        product: faker.image.imageUrl(200, 200, 'Jeans'),
-        defect: faker.image.imageUrl(200, 200, 'Torn-Jeans'),
+        product: faker.image.imageUrl(200, 200, 'Shirts'),
+        defect: faker.image.imageUrl(200, 200, 'Trousers'),
       };
       this.images.push(newImage);
     }
@@ -160,8 +160,8 @@ export class PdfExportPage implements OnInit {
     for (const image of this.images) {
       // Create the main row for the Todo item
       const tableRow = [
-        {content: image.product, cellWidth: 200},
-        {content: image.defect, cellWidth: 200}
+        {content: image.product,},
+        {content: image.defect}
       ];
 
       tableData.push(tableRow);
@@ -171,17 +171,23 @@ export class PdfExportPage implements OnInit {
       head: [['Product', 'Defect']],
       body: tableData,
       rowPageBreak: 'avoid',
-      theme: 'plain',
+      theme: 'grid',
       headStyles: { valign: 'middle', halign: 'center', fillColor: [125, 125, 125]}, // Set background color for header row
-      bodyStyles: { valign: 'middle', halign: 'center'}, // Set vertical alignment for table cells
+      bodyStyles: { valign: 'middle', halign: 'center', minCellHeight: 110, cellPadding: 10}, // Set vertical alignment for table cells
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index > -1) {
+          data.cell.text = [''];
+        }
+      },
       didDrawCell: (data) => {
-        if (data.row.index != 0) {
+        if (data.section === 'body' && data.column.index > -1) {
           doc.addImage(
             tableData[data.row.index][data.column.index].content,
-            data.cell.x,
-            data.cell.y,
-            data.cell.width,
-            data.cell.width
+            'JPEG',
+            data.cell.x + (data.cell.width/2) - 50,
+            data.cell.y + 5,
+            100,
+            100,
           );
         }
       },
